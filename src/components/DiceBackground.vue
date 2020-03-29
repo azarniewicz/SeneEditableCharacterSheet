@@ -1,9 +1,8 @@
 <template>
     <div class="dice">
-        <span v-if="!editing" v-on:click="toggle">{{ value }}</span>
+        <span v-if="!editing" v-on:click="toggle">{{ (value ? value : 0) }}</span>
         <div v-else>
             <b-input v-model="value"
-                     :value="newValue"
                      type="number"
                      custom-class="is-small"
                      @keyup.native.enter="hide"
@@ -18,10 +17,14 @@
 
     export default {
         props: {
-            defaultValue: {
+            value: {
                 type: Number,
                 required: false,
                 default: 0
+            },
+            defaultValue: {
+                type: Number,
+                required: false
             }
         },
         directives: {
@@ -30,7 +33,6 @@
         data() {
             return {
                 editing: false,
-                value: this.defaultValue,
                 init: false
             }
         },
@@ -53,6 +55,9 @@
         watch: {
             value(value) {
                 this.$emit('input', value);
+            },
+            defaultValue(val) {
+                this.value = val;
             }
         }
     }

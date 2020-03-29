@@ -1,6 +1,6 @@
 <template>
     <div class="has-text-weight-bold">
-        <div  class="columns">
+        <div class="columns">
             <div class="column columns is-full">
                 <div class="column is-three-fifths">
                     <h1 class="input-box">Opis Bohatera</h1>
@@ -20,19 +20,21 @@
                                     {{ cz }}
                                 </span>
                                 <div class="column">
-                                    <dice-background>
+                                    <dice-background v-model="czesciCiala[cz]">
                                     </dice-background>
                                 </div>
                             </li>
                             <li class="columns">
                                 <span class="column stat-box">
-                                    <b-input name="subject" custom-class="is-small" v-model="rany[0]" v-if="editing"></b-input>
+                                    <b-input name="subject" custom-class="is-small" v-model="rany[0]"
+                                             v-if="editing"></b-input>
                                     <span v-else>{{ rany[0] }}</span>
                                 </span>
                             </li>
                             <li class="columns">
                                 <span class="column stat-box">
-                                    <b-input name="subject" custom-class="is-small" v-model="rany[1]" v-if="editing"></b-input>
+                                    <b-input name="subject" custom-class="is-small" v-model="rany[1]"
+                                             v-if="editing"></b-input>
                                     <span v-else>{{ rany[1] }}</span>
                                 </span>
                             </li>
@@ -81,7 +83,8 @@
                     <h1 class="input-box">Wyposażenie</h1>
                     <div class="text-box">
                         <b-field style="margin-bottom: 4px !important; min-height: 88%">
-                            <b-input maxlength="500" rows="13" type="textarea" v-model="wyposazenie" v-if="editing"></b-input>
+                            <b-input maxlength="500" rows="13" type="textarea" v-model="wyposazenie"
+                                     v-if="editing"></b-input>
                             <span v-else>{{ wyposazenie }}</span>
                         </b-field>
                         <div class="input-box has-text-left is-flex">
@@ -109,40 +112,66 @@
 </template>
 
 <script>
-  import DiceBackground from './DiceBackground.vue';
+    import DiceBackground from './DiceBackground.vue';
 
-  export default {
-    components: { DiceBackground },
-    name: 'BackPage.vue',
-    props: {
-      editing: {
-          type: Boolean,
-          required: true
-      }
-    },
-    data() {
-      return {
-        zywotnosc: null,
-        ranyCiel: null,
-        ranyPsych: null,
-        ranyKryt: null,
-        udzwig: null,
-        suma: null,
-        wyposazenie: null,
-        uzbrojenie: null,
-        czesciCiala: {
-          'Głowa': null,
-          'Korpus': null,
-          'Prawa Ręka': null,
-          'Lewa Ręka': null,
-          'Prawa Noga': null,
-          'Lewa Noga': null
+    export default {
+        components: {DiceBackground},
+        name: 'BackPage.vue',
+        props: {
+            editing: {
+                type: Boolean,
+                required: true
+            },
+            value: {
+                type: Object,
+                required: false
+            }
         },
-        rany: [],
-        opis: ''
-      }
+        data() {
+            return {
+                zywotnosc: null,
+                ranyCiel: null,
+                ranyPsych: null,
+                ranyKryt: null,
+                udzwig: null,
+                suma: null,
+                wyposazenie: null,
+                uzbrojenie: null,
+                czesciCiala: {
+                    'Głowa': null,
+                    'Korpus': null,
+                    'Prawa Ręka': null,
+                    'Lewa Ręka': null,
+                    'Prawa Noga': null,
+                    'Lewa Noga': null
+                },
+                rany: [],
+                opis: '',
+            }
+        },
+        watch: {
+            $data: {
+                handler: function(value) {
+                    this.$emit('input', value);
+                },
+                deep: true
+            },
+            value(val) {
+                for (let property in val) {
+                    if (this.$data.hasOwnProperty(property)) {
+                        if (isNaN(parseFloat(val[property]))) {
+                            this.$data[property] = val[property];
+                        } else {
+                            this.$data[property] = parseFloat(val[property]);
+                        }
+                    }
+                }
+            }
+        },
+        mounted() {
+            this.$emit('input', this.$data);
+        }
     }
-  }
 </script>
 
 <style scoped>

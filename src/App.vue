@@ -1,21 +1,33 @@
 <template>
     <div id="app">
         <b-button type="info" v-on:click="preview()"
-                  style="position: fixed; right: 50px; bottom: 60px">Preview
+                  style="position: fixed; right: 50px; bottom: 120px">Preview
         </b-button>
         <b-button type="info" v-on:click="print()"
-                  style="position: fixed; right: 150px; bottom: 60px">Download
+                  style="position: fixed; right: 150px; bottom: 120px">Download
         </b-button>
-        <front-page class="a4" ref="printMe" id="printMe" :editing="editing" v-model="characterName"/>
-        <back-page class="a4" id="printMe2" :editing="editing" />
+        <b-button type="info" v-on:click="exportData()"
+                  style="position: fixed; right: 50px; bottom: 60px">Export
+        </b-button>
+        <b-field class="file" style="position: fixed; right: 150px; bottom: 50px">
+            <b-upload v-model="file">
+                <a class="button">
+                    <b-icon icon="upload"></b-icon>
+                    <span>Click to upload</span>
+                </a>
+            </b-upload>
+        </b-field>
+        <front-page class="a4" ref="printMe" id="printMe" :editing="editing" v-model="frontPageData"/>
+        <back-page class="a4" id="printMe2" :editing="editing" v-model="backPageData"/>
     </div>
 </template>
 
 <script>
-    import FrontPage from './components/FrontPage.vue'
-    import BackPage from './components/BackPage.vue'
+    import axios from 'axios';
     import jsPDF from 'jspdf'
     import html2canvas from "html2canvas"
+    import FrontPage from './components/FrontPage.vue'
+    import BackPage from './components/BackPage.vue'
 
     export default {
         name: 'App',
@@ -28,7 +40,10 @@
                 editing: true,
                 output: null,
                 characterName: '',
-                pages: []
+                pages: [],
+                frontPageData: {},
+                backPageData: {},
+                file: null
             }
         },
         methods: {
@@ -60,10 +75,36 @@
 
                 await pdf.addImage(this.pages[1], 'PNG', 0, 0, 211, 298);
 
-                let fileName = this.characterName !== '' ? this.characterName : 'karta';
+                let fileName = this.frontPageData.imie !== '' ? this.frontPageData.imie : 'karta';
 
                 pdf.save(fileName + '.pdf');
             },
+            saveText(text, filename){
+                let a = document.createElement('a');
+                a.setAttribute('href', 'data:text/plain;charset=utf-8,'+encodeURIComponent(text));
+                a.setAttribute('download', filename);
+                a.click()
+            },
+            exportData() {
+                let data = JSON.stringify({
+                    front: this.frontPageData,
+                    back: this.backPageData
+                });
+                let name = this.frontPageData.imie !== '' ? this.frontPageData.imie : 'export.json';
+                this.saveText(data, name);
+            }
+        },
+        watch: {
+            file(val) {
+                const reader = new FileReader();
+                reader.readAsText(val, "UTF-8");
+                reader.onload = (evt) => {
+                    let data = JSON.parse(JSON.parse(JSON.stringify(evt.target.result)));
+                    this.frontPageData = data.front;
+                    this.backPageData = data.back;
+
+                };
+            }
         }
     }
 </script>

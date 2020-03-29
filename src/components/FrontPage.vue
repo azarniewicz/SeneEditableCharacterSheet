@@ -163,6 +163,10 @@
             editing: {
                 type: Boolean,
                 required: true
+            },
+            value: {
+                type: Object,
+                required: false
             }
         },
         components: {
@@ -220,9 +224,26 @@
             }
         },
         watch: {
-            imie(value) {
-                this.$emit('input', value);
+            $data: {
+                handler: function(value) {
+                    this.$emit('input', value);
+                },
+                deep: true
+            },
+            value(val) {
+                for (let property in val) {
+                    if (this.$data.hasOwnProperty(property)) {
+                        if (isNaN(parseFloat(val[property]))) {
+                            this.$data[property] = val[property];
+                        } else {
+                            this.$data[property] = parseFloat(val[property]);
+                        }
+                    }
+                }
             }
+        },
+        mounted() {
+            this.$emit('input', this.$data);
         }
     }
 </script>
