@@ -1,31 +1,28 @@
 <template>
     <div id="app">
-        <b-button type="info" v-on:click="preview()"
-                  style="position: fixed; right: 50px; bottom: 120px">Preview
-        </b-button>
-        <b-button type="info" v-on:click="print()"
-                  style="position: fixed; right: 150px; bottom: 120px">Download
-        </b-button>
-        <b-button type="info" v-on:click="exportData()"
-                  style="position: fixed; right: 50px; bottom: 60px">Export
-        </b-button>
-        <b-field class="file" style="position: fixed; right: 150px; bottom: 50px">
-            <b-upload v-model="file">
-                <a class="button">
-                    <b-icon icon="upload"></b-icon>
-                    <span>Click to upload</span>
-                </a>
-            </b-upload>
-        </b-field>
+        <b-upload v-model="file" style="display:none" >
+            <a class="button"  ref="uploadButton">
+                <b-icon icon="upload"></b-icon>
+                <span>Click to upload</span>
+            </a>
+        </b-upload>
+        <fab :actions="fabActions"
+             :bg-color="'#278be3'"
+             @print="print"
+             @preview="preview"
+             @exportData="exportData"
+             @importData="importData"
+        ></fab>
+        <b-loading :is-full-page="true" :active.sync="isLoading"></b-loading>
         <front-page class="a4" ref="printMe" id="printMe" :editing="editing" v-model="frontPageData"/>
         <back-page class="a4" id="printMe2" :editing="editing" v-model="backPageData"/>
     </div>
 </template>
 
 <script>
-    import axios from 'axios';
     import jsPDF from 'jspdf'
     import html2canvas from "html2canvas"
+    import fab from 'vue-fab'
     import FrontPage from './components/FrontPage.vue'
     import BackPage from './components/BackPage.vue'
 
@@ -34,6 +31,7 @@
         components: {
             FrontPage,
             BackPage,
+            fab
         },
         data() {
             return {
@@ -43,7 +41,30 @@
                 pages: [],
                 frontPageData: {},
                 backPageData: {},
-                file: null
+                file: null,
+                isLoading: false,
+                fabActions: [
+                    {
+                        name: 'preview',
+                        icon: 'remove_red_eye',
+                        tooltip: 'Podgląd'
+                    },
+                    {
+                        name: 'print',
+                        icon: 'picture_as_pdf',
+                        tooltip: 'Pobierz PDF'
+                    },
+                    {
+                        name: 'exportData',
+                        icon: 'get_app',
+                        tooltip: 'Eksportuj do pliku JSON'
+                    },
+                    {
+                        name: 'importData',
+                        icon: 'publish',
+                        tooltip: 'Importuj plik JSON'
+                    },
+                ]
             }
         },
         methods: {
@@ -52,6 +73,7 @@
             },
             async print() {
                 this.editing = false;
+                this.isLoading = true;
 
                 await setTimeout(() => {
                     // wait for rerendering
@@ -59,12 +81,12 @@
 
                 /** WITH CSS */
                 await html2canvas(document.querySelector('#printMe'), {
-                    scale: 2
+                    scale: 1.2
                 }).then((canvas) => {
                     this.pages.push(canvas.toDataURL('image/png'));
                 });
                 await html2canvas(document.querySelector('#printMe2'), {
-                    scale: 2
+                    scale: 1.2
                 }).then((canvas) => {
                     this.pages.push(canvas.toDataURL('image/png'));
                 });
@@ -77,6 +99,8 @@
 
                 let fileName = this.frontPageData.imie !== '' ? this.frontPageData.imie : 'karta';
 
+                this.isLoading = false;
+
                 pdf.save(fileName + '.pdf');
             },
             saveText(text, filename){
@@ -85,12 +109,15 @@
                 a.setAttribute('download', filename);
                 a.click()
             },
+            importData() {
+                this.$refs.uploadButton.click();
+            },
             exportData() {
                 let data = JSON.stringify({
                     front: this.frontPageData,
                     back: this.backPageData
                 });
-                let name = this.frontPageData.imie !== '' ? this.frontPageData.imie : 'export.json';
+                let name = this.frontPageData.imie !== '' ? this.frontPageData.imie + '.json' : 'export.json';
                 this.saveText(data, name);
             }
         },
@@ -102,7 +129,6 @@
                     let data = JSON.parse(JSON.parse(JSON.stringify(evt.target.result)));
                     this.frontPageData = data.front;
                     this.backPageData = data.back;
-
                 };
             }
         }
@@ -110,6 +136,13 @@
 </script>
 
 <style lang="scss">
+    @import "~bulma/sass/utilities/_all";
+
+    $tablet: '100px';
+    // Import Bulma and Buefy styles
+    @import "~bulma";
+    @import "~buefy/src/scss/buefy";
+
     #app {
         font-family: Avenir, Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -117,7 +150,15 @@
         text-align: center;
         color: #2c3e50;
         margin-top: 60px auto;
+        overflow: auto;
+        overflow: -moz-scrollbars-none;
+        -ms-overflow-style: none;
+        position: relative;
+        will-change: scroll-position !important;
+        max-height: 100vh;
     }
+
+    #app::-webkit-scrollbar { width: 0 !important }
 
     html {
         width: 100%;
@@ -232,5 +273,9 @@
 
     .textarea {
         resize: none !important;
+    }
+
+    * {
+        will-change: scroll-position !important;
     }
 </style>
